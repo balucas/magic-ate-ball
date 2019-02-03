@@ -1,24 +1,31 @@
 import React from 'react';
-import { StyleSheet, Text, View, AsyncStorage, Button, ScrollView, TouchableHighlight } from 'react-native';
+import { StyleSheet, Text, View, AsyncStorage, Button, ScrollView, TouchableHighlight, Image } from 'react-native';
 import { createAppContainer, createStackNavigator, StackActions, NavigationActions } from 'react-navigation';
-import { AppLoading, Asset, Font, Icon } from 'expo';
-import Restaurants from '../data/Restaurants';
+import { AppLoading, Asset, Font, Icon, Permissions, Location } from 'expo';
+import getRestaurants from '../data/YelpData';
 
 export default class IntroScreen extends React.Component {
+constructor(){
+  super();
+  this.getLocationAsync().then((response) => {
+    console.log(response.coords);
+    this.setState({location: response.coords});
+    console.log(this.state.location);
+    getRestaurants(this.state.location).then((response) => {
+      this.setState({isLoadingComplete: true, restaurants: response});
+    });
+  });
+}
 
 state = {
-  isLoadingComplete: true,
+  isLoadingComplete: false,
   isFirstLoad: false,
+  restaurants: [],
+  locationPermissions: false,
+  location: {}
 };
 
   render() {
-    if(!this.state.isLoadingComplete){
-      return (
-        <View>
-          <AppLoading/>
-        </View>
-    );
-    }else{
       return (
         <View style={{flex: 1}}>
           <View style={{alignItems: 'center',
@@ -30,17 +37,38 @@ state = {
             </Text>
           </View>
           <ScrollView>
-            <RestaurantList/>
+            {this.state.isLoadingComplete?
+            <RestaurantList that={this}/>
+            :
+            <Image source={require('../assets/magicateball.png')}/>
+            }
           </ScrollView>
           <Button title='Continue'
                   onPress={() => {this._handleProceed(this)}}/>
         </View>
       )
+  }
+
+  async getLocationAsync() {
+    const { Location, Permissions } = Expo;
+    // permissions returns only for location permissions on iOS and under certain conditions, see Permissions.LOCATION
+    const { status, permissions } = await Permissions.askAsync(Permissions.LOCATION);
+    if (status === 'granted') {
+      this.setState({locationPermissions: true});
+      return Location.getCurrentPositionAsync({enableHighAccuracy: true});
+
+    } else {
+      throw new Error('Location permission not granted');
     }
   }
 
+  async _saveSuggestion(suggestion){
+
+    await AsyncStorage.setItem('SuggestedRestaurants', suggestion);
+  }
+
   async _handleProceed(that){
-    var selectedRestaurants = Restaurants.filter(item => item.isSelected);
+    var selectedRestaurants = this.state.restaurants.filter(item => item.isSelected && item.rating != 0);
     console.log(JSON.stringify(selectedRestaurants));
 
     try {
@@ -54,14 +82,21 @@ state = {
 
           if (request.status === 200) {
             console.log('success', request.responseText);
-          } else {
+            this._saveSuggestion(request.responseText);
+          } else {     
             console.warn('error');
           }
         };
+        console.log(this.state.restaurants);
+        var payload = { "longitude" : this.state.location.longitude,
+                        "latitude" : this.state.location.latitude,
+                        "selectedRestaurants" : selectedRestaurants,
+                        "allRestaurants" : this.state.restaurants
+                      };
 
         request.open('POST', 'http://35.231.187.174:5000/info');
         request.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
-        request.send(JSON.stringify(selectedRestaurants));
+        request.send(JSON.stringify(payload));
 
         that.props.navigation.dispatch(StackActions.reset({
             index: 0,
@@ -73,6 +108,7 @@ state = {
         // Error saving data
         console.log('save failed ' + error);
     }
+
 
 
 
@@ -89,8 +125,7 @@ state = {
 }
 
 function RestaurantList(props){
-  var list = Restaurants;
-
+  var list = props.that.state.restaurants;
   const listView = list.map((item) =>
     <RestaurantSelect key={item.alias} data={item}/>
   );
@@ -136,58 +171,64 @@ class RestaurantSelect extends React.Component{
                   <Text key={this.props.data.alias + 'Address'} style={{color: '#A9A9A9' }}>{this.props.data.location.address1}</Text>
                 </View>
               :
-                <View key={this.props.data.alias + 'Rate'}
-                      style={{flexDirection: 'row',
-                              paddingTop: 12}}>
-                  <TouchableHighlight key={this.props.data.alias + '1Star'}
-                                      activeOpacity={0}
-                                      onPress={() => {this._selectRating(1)}}>
-                    <Icon.Ionicons
-                      key={this.props.data.alias + '1StarIcon'}
-                      name={this.state.rating < 1 ? 'md-star-outline' : 'md-star'}
-                      size={40}/>
-                  </TouchableHighlight>
-                  <TouchableHighlight key={this.props.data.alias + '2Star'}
-                                      activeOpacity={0}
-                                      onPress={() => {this._selectRating(2)}}>
-                    <Icon.Ionicons
-                      key={this.props.data.alias + '2StarIcon'}
-                      name={this.state.rating < 2 ? 'md-star-outline' : 'md-star'}
-                      size={40}/>
-                  </TouchableHighlight>
-                  <TouchableHighlight key={this.props.data.alias + '3Star'}
-                                      activeOpacity={0}
-                                      onPress={() => {this._selectRating(3)}}>
-                    <Icon.Ionicons
-                      key={this.props.data.alias + '3StarIcon'}
-                      name={this.state.rating < 3 ? 'md-star-outline' : 'md-star'}
-                      size={40}/>
-                  </TouchableHighlight>
-                  <TouchableHighlight key={this.props.data.alias + '4Star'}
-                                      activeOpacity={0}
-                                      onPress={() => {this._selectRating(4)}}>
-                    <Icon.Ionicons
-                      key={this.props.data.alias + '4StarIcon'}
-                      name={this.state.rating < 4 ? 'md-star-outline' : 'md-star'}
-                      size={40}/>
-                  </TouchableHighlight>
-                  <TouchableHighlight key={this.props.data.alias + '5Star'}
-                                      activeOpacity={0}
-                                      onPress={() => {this._selectRating(5)}}>
-                    <Icon.Ionicons
-                      key={this.props.data.alias + '5StarIcon'}
-                      name={this.state.rating < 5 ? 'md-star-outline' : 'md-star'}
-                      size={40}/>
-                  </TouchableHighlight>
-                  <TouchableHighlight key={this.props.data.alias + 'Cancel'}
-                                      onPress={() => {this._cancelSelect()}}
-                                      style={{marginLeft: 150}}>
-                    <Icon.Ionicons
-                      key={this.props.data.alias + 'Close'}
-                      name='md-close'
-                      size={40}/>
-                  </TouchableHighlight>
+                <View>
+                  <View key={this.props.data.alias + 'View'} style={{paddingTop: 10}}>
+                    <Text key={this.props.data.alias + 'Name'}>{this.props.data.name}</Text>
+                  </View>
+                  <View key={this.props.data.alias + 'Rate'}
+                        style={{flexDirection: 'row',
+                                paddingTop: 0,
+                                paddingLeft: 20}}>
+                    <TouchableHighlight key={this.props.data.alias + '1Star'}
+                                        activeOpacity={0}
+                                        onPress={() => {this._selectRating(1)}}>
+                      <Icon.Ionicons
+                        key={this.props.data.alias + '1StarIcon'}
+                        name={this.state.rating < 1 ? 'md-star-outline' : 'md-star'}
+                        size={40}/>
+                    </TouchableHighlight>
+                    <TouchableHighlight key={this.props.data.alias + '2Star'}
+                                        activeOpacity={0}
+                                        onPress={() => {this._selectRating(2)}}>
+                      <Icon.Ionicons
+                        key={this.props.data.alias + '2StarIcon'}
+                        name={this.state.rating < 2 ? 'md-star-outline' : 'md-star'}
+                        size={40}/>
+                    </TouchableHighlight>
+                    <TouchableHighlight key={this.props.data.alias + '3Star'}
+                                        activeOpacity={0}
+                                        onPress={() => {this._selectRating(3)}}>
+                      <Icon.Ionicons
+                        key={this.props.data.alias + '3StarIcon'}
+                        name={this.state.rating < 3 ? 'md-star-outline' : 'md-star'}
+                        size={40}/>
+                    </TouchableHighlight>
+                    <TouchableHighlight key={this.props.data.alias + '4Star'}
+                                        activeOpacity={0}
+                                        onPress={() => {this._selectRating(4)}}>
+                      <Icon.Ionicons
+                        key={this.props.data.alias + '4StarIcon'}
+                        name={this.state.rating < 4 ? 'md-star-outline' : 'md-star'}
+                        size={40}/>
+                    </TouchableHighlight>
+                    <TouchableHighlight key={this.props.data.alias + '5Star'}
+                                        activeOpacity={0}
+                                        onPress={() => {this._selectRating(5)}}>
+                      <Icon.Ionicons
+                        key={this.props.data.alias + '5StarIcon'}
+                        name={this.state.rating < 5 ? 'md-star-outline' : 'md-star'}
+                        size={40}/>
+                    </TouchableHighlight>
+                    <TouchableHighlight key={this.props.data.alias + 'Cancel'}
+                                        onPress={() => {this._cancelSelect()}}
+                                        style={{marginLeft: 150}}>
+                      <Icon.Ionicons
+                        key={this.props.data.alias + 'Close'}
+                        name='md-close'
+                        size={40}/>
+                    </TouchableHighlight>
 
+                  </View>
                 </View>
               }
       </TouchableHighlight>
@@ -204,7 +245,7 @@ const styles = StyleSheet.create({
   },
 
   selectedRestaurant: {
-    height:70,
+    height:100,
     paddingLeft: 40,
     backgroundColor: '#a0c4ff',
   },
