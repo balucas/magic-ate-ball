@@ -46,10 +46,27 @@ state = {
     try {
         await AsyncStorage.setItem('VisitedRestaurants', JSON.stringify(selectedRestaurants));
 
+        var request = new XMLHttpRequest();
+        request.onreadystatechange = (e) => {
+          if (request.readyState !== 4) {
+            return;
+          }
+
+          if (request.status === 200) {
+            console.log('success', request.responseText);
+          } else {
+            console.warn('error');
+          }
+        };
+
+        request.open('POST', 'http://35.231.187.174:5000/info');
+        request.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+        request.send(JSON.stringify(selectedRestaurants));
+
         that.props.navigation.dispatch(StackActions.reset({
             index: 0,
             actions: [
-              NavigationActions.navigate({ routeName: 'Intro2' })
+              NavigationActions.navigate({ routeName: 'Home' })
             ],
           }));
     } catch (error) {
