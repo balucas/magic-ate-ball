@@ -40,11 +40,19 @@ state = {
             {this.state.isLoadingComplete?
             <RestaurantList that={this}/>
             :
-            <Image source={require('../assets/magicateball.png')}/>
+            <View style={{alignItems: 'center', justifyContent:'center'}}>
+              <Image style={{height: 200, width:200}} source={require('../assets/magicateball.png')}/>
+            </View>
             }
           </ScrollView>
+          {this.state.isLoadingComplete
+            ?
           <Button title='Continue'
                   onPress={() => {this._handleProceed(this)}}/>
+            :
+          <Text>Loading</Text>
+
+          }
         </View>
       )
   }
@@ -83,7 +91,7 @@ state = {
           if (request.status === 200) {
             console.log('success', request.responseText);
             this._saveSuggestion(request.responseText);
-          } else {     
+          } else {
             console.warn('error');
           }
         };

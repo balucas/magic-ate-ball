@@ -32,13 +32,13 @@ export default class HomeScreen extends React.Component {
             title="Tell me where to eat!"
             onPress={() => {this._getSuggestion()
 
-            }}   
+            }}
           />
           :
           <View style={{alignItems: 'center', justifyContent:'center'}}>
-            <Text style={{fontSize: 30}} >{this.state.suggested[0]}</Text>
-            <Text style={{fontSize: 30}} >{this.state.suggested[1]}</Text>
-            <Text style={{fontSize: 30}} >{this.state.suggested[2]}</Text>
+            <Text style={{fontSize: 27}} >{this.state.suggested[0]}</Text>
+            <Text style={{fontSize: 27}} >{this.state.suggested[1]}</Text>
+            <Text style={{fontSize: 27}} >{this.state.suggested[2]}</Text>
           </View>
         }
       </View>
