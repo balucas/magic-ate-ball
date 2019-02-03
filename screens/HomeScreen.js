@@ -32,7 +32,7 @@ export default class HomeScreen extends React.Component {
     this.props.navigation.dispatch(StackActions.reset({
               index: 0,
               actions: [
-                NavigationActions.navigate({ routeName: 'Intro' })
+                NavigationActions.navigate({ routeName: 'Intro' }) 
               ],
             }));
 

@@ -127,6 +127,12 @@ state = {
           if (request.status === 200) {
             console.log('success', request.responseText);
             this._saveSuggestion(request.responseText);
+                    that.props.navigation.dispatch(StackActions.reset({
+                        index: 0,
+                        actions: [
+                          NavigationActions.navigate({ routeName: 'Home' })
+                        ],
+                      }));
           } else {
             // console.warn('error');
           }
@@ -139,16 +145,10 @@ state = {
                         "allRestaurants" : this.state.restaurants
                       };
 
-        request.open('POST', 'http://35.231.187.174:5000/info');
+        request.open('POST', 'http://35.229.118.120:5000/info');
         request.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
         request.send(JSON.stringify(payload));
 
-        that.props.navigation.dispatch(StackActions.reset({
-            index: 0,
-            actions: [
-              NavigationActions.navigate({ routeName: 'Home' })
-            ],
-          }));
     } catch (error) {
         // Error saving data
         console.log('save failed ' + error);
