@@ -4,6 +4,11 @@ import { createAppContainer, createStackNavigator, StackActions, NavigationActio
 
 export default class HomeScreen extends React.Component {
 
+  constructor(){
+    super();
+    this._getSuggestion();
+  }
+
   state = {
     dispSuggestion: false,
     suggested: '',
@@ -36,23 +41,13 @@ export default class HomeScreen extends React.Component {
   render() {
     return (
       <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
-        {!this.state.dispSuggestion
-          ?
-          <Button
-            title="Tell me where to eat!"
-            onPress={() => {this._getSuggestion()
-
-            }}
-          />
-          :
           <View style={{alignItems: 'center', justifyContent:'center'}}>
             <Text style={{fontSize: 27}} >{this.state.suggested[0]}</Text>
             <Text style={{fontSize: 27}} >{this.state.suggested[1]}</Text>
             <Text style={{fontSize: 27}} >{this.state.suggested[2]}</Text>
           </View>
-        }
         <Button
-          title="Back to Page"
+          title="Suggest again!"
           onPress={() => {this._returnToIntro()}}
         />
       </View>

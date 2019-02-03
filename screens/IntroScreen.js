@@ -12,6 +12,23 @@ constructor(){
     this.setState({location: response.coords});
     console.log(this.state.location);
     getRestaurants(this.state.location).then((response) => {
+
+      this.getExistingRestaurantList().then((exresponse) => {
+        if(exresponse != null){
+          console.log('ex rest list: ' + exresponse);
+          response.forEach(function(item) {
+            var restId = item.id;
+            // for(var key in exresponse) {
+            //   console.log(key);
+            //   console.log(exresponse[key]);
+            // }
+            if(exresponse[restId] != null){
+              // consol.log("haiiiiiiiiiiiiiiiiiiii")
+              response[restId] = exresponse[restId];
+            }
+          });
+        }
+      });
       this.setState({isLoadingComplete: true, restaurants: response});
     });
   });
@@ -47,7 +64,7 @@ state = {
           </ScrollView>
           {this.state.isLoadingComplete
             ?
-          <Button title='Continue'
+          <Button title='Tell me where to eat!'
                   onPress={() => {this._handleProceed(this)}}/>
             :
           <Text>Loading</Text>
@@ -70,6 +87,21 @@ state = {
     }
   }
 
+  async getExistingRestaurantList(){
+    try {
+      const value = await AsyncStorage.getItem('SelectedRestaurants');
+      if (value !== null) {
+        // We have data!!
+        console.log(value);
+        return value;
+      }else{
+        return null;
+      }
+    } catch (error) {
+      // Error retrieving data
+    }
+  }
+
   async _saveSuggestion(suggestion){
 
     await AsyncStorage.setItem('SuggestedRestaurants', suggestion);
@@ -78,10 +110,14 @@ state = {
   async _handleProceed(that){
     var selectedRestaurants = this.state.restaurants.filter(item => item.isSelected && item.rating != 0);
     console.log(JSON.stringify(selectedRestaurants));
-
+    var selectedRestaurantMap = {};
+    selectedRestaurants.forEach(function(item){
+      selectedRestaurantMap[item.id] = item;
+    });
     try {
-        await AsyncStorage.setItem('VisitedRestaurants', JSON.stringify(selectedRestaurants));
+        await AsyncStorage.setItem('SelectedRestaurants', JSON.stringify(selectedRestaurantMap));
 
+        // if (isEmpty(selectedRestaurantMap)) {
         var request = new XMLHttpRequest();
         request.onreadystatechange = (e) => {
           if (request.readyState !== 4) {
@@ -92,9 +128,10 @@ state = {
             console.log('success', request.responseText);
             this._saveSuggestion(request.responseText);
           } else {
-            console.warn('error');
+            // console.warn('error');
           }
         };
+      // }
         console.log(this.state.restaurants);
         var payload = { "longitude" : this.state.location.longitude,
                         "latitude" : this.state.location.latitude,
@@ -143,6 +180,14 @@ function RestaurantList(props){
 }
 
 class RestaurantSelect extends React.Component{
+  constructor(){
+    super();
+    this._initState().then(response =>{
+      if(this.props.data.isSelected){
+        this.setState({selectActive: true, rating: this.props.data.rating});
+      }
+    });
+  }
 
   state = {
     selectActive: false,
@@ -150,8 +195,13 @@ class RestaurantSelect extends React.Component{
   }
 
   _initialSelect(){
-    this.setState({selectActive: true});
-    this.props.data.isSelected = true;
+    console.log(this.props.data)
+    if (this.props.data.isSelected) {
+      this.setState({selectActive: true, rating: this.props.data.rating});
+    } else {
+      this.setState({selectActive: true});
+      this.props.data.isSelected = true;
+    }
   }
 
   _cancelSelect(){
@@ -162,6 +212,12 @@ class RestaurantSelect extends React.Component{
   _selectRating(rating){
     this.setState({rating: rating});
     this.props.data.rating = rating;
+  }
+
+  async _initState(){
+    setTimeout(function(){
+
+    }, 200);
   }
 
   render(){
