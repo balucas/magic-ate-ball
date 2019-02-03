@@ -2,7 +2,7 @@ import React from 'react';
 
 export function getRestaurants(){
 
-  return fetch('https://api.yelp.com/v3/businesses/search?location=Toronto&categories=food', {
+  return fetch('https://api.yelp.com/v3/businesses/search?location=Toronto&categories=restaurants&open_now=true', {
                 method: 'GET',
                 headers:  { 'Postman-Token': '84c78f1d-1acc-443b-8646-3b9cae19ac81',
                             'cache-control': 'no-cache',
