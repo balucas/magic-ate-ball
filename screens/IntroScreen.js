@@ -33,7 +33,7 @@ state = {
                         paddingBottom: 8,
                         borderBottomColor: '#000000'}}>
             <Text style={{fontSize: 20,}}>
-              Rate the restaurants you've been to!
+              Rate the restaurants you have been to!
             </Text>
           </View>
           <ScrollView>

@@ -23,6 +23,16 @@ export default class HomeScreen extends React.Component {
 
   }
 
+  _returnToIntro(){
+    this.props.navigation.dispatch(StackActions.reset({
+              index: 0,
+              actions: [
+                NavigationActions.navigate({ routeName: 'Intro' })
+              ],
+            }));
+
+  }
+
   render() {
     return (
       <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
@@ -41,6 +51,10 @@ export default class HomeScreen extends React.Component {
             <Text style={{fontSize: 27}} >{this.state.suggested[2]}</Text>
           </View>
         }
+        <Button
+          title="Back to Page"
+          onPress={() => {this._returnToIntro()}}
+        />
       </View>
     );
   }
